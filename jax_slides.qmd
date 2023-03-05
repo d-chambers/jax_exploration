@@ -1,0 +1,85 @@
+---
+title: Jax
+subtitle: The New Hot Thing
+format:
+  revealjs: 
+    slide-number: true
+    chalkboard: 
+      buttons: false
+    preview-links: auto
+    logo: images/logo.png
+    css: styles.css
+    footer: <https://github.com/google/jax>
+resources:
+  - dascore.pdf
+---
+
+## Jax: What is it? 
+
+:::{.incremental}
+- Python library
+- Numpy replacement
+- Linear algebra workhorse
+  - Code complied to XLA 
+  - Supports CPU, GPU, TPU
+- Set of functional transforms
+- Set of deep learning primitives
+- How can we use it in geophysics?
+:::
+
+
+## Jax: Grad
+
+Jax supports automatic differentiation:
+
+:::{.incremental}
+- python control structures
+- recursion
+- forward or backward
+:::
+
+:::{.fragment}
+
+```{python}
+#| echo: true
+from jax import grad
+import jax.numpy as jnp
+
+def tanh(x):  # Define a function
+  y = jnp.exp(-2.0 * x)
+  return (1.0 - y) / (1.0 + y)
+
+grad_tanh = grad(tanh)  # Obtain its gradient function
+print(grad_tanh(1.0))   # Evaluate it at x = 1.0
+```
+
+:::
+
+## Jax: Just in Time (jit) Compilation
+
+<br>
+
+```{python}
+#| echo: true
+import jax.numpy as jnp
+from jax import jit
+
+def slow_f(x):
+  # Element-wise ops see a large benefit from fusion
+  return x * x + x * 2.0
+
+fast_f = jit(slow_f)
+
+x = jnp.ones((5000, 5000))
+
+%timeit -n10 -r3 fast_f(x) 
+%timeit -n10 -r3 slow_f(x)
+```
+
+# Jax as Numpy
+
+```python
+import jax.numpy as jnp
+
+ar = jnp.array([1,2,3])
+```
