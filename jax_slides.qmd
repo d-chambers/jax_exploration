@@ -38,7 +38,6 @@ resources:
 - jax.lax - XLA mapped primitives
 - jax.numpy - near numpy parity 
 - [50+ jax-based libraries](https://github.com/n2cholas/awesome-jax)
-  - [j-Wave: Differentiable acoustic simulations in JAX](https://github.com/ucl-bug/jwave)
 :::
 
 
@@ -90,7 +89,7 @@ H = hessian(lambda x, y, z: x**2 + y**2 + z**2)
 
 Advanced controls for broadcasting
 
-```python
+```{python}
 import jax.numpy as jnp
 from jax import vmap
 
@@ -108,8 +107,6 @@ out2 = add_no_loop(a, b)
 
 print(out1)
 print(out2)
-
-
 ```
 
 
@@ -239,38 +236,5 @@ GPU
 
 ## 2D acoustic wave equation
 
-```python
-import jax.numpy as jnp
-from jax import grad, jit
-
-# Define the wave equation
-def wave_eqn(u, t, dx, dy, c):
-    d2udx2 = (jnp.roll(u, -1, axis=1) - 2 * u + jnp.roll(u, 1, axis=1)) / dx**2
-    d2udy2 = (jnp.roll(u, -1, axis=0) - 2 * u + jnp.roll(u, 1, axis=0)) / dy**2
-    d2udt2 = c**2 * (d2udx2 + d2udy2)
-    return d2udt2
-
-# Define the initial conditions
-u0 = jnp.zeros((Nx, Ny))
-u0[Nx//2, Ny//2] = 1
-
-# Define the parameters
-c = 1.0
-dx = 1.0
-dy = 1.0
-dt = 0.01
-T = 10.0
-
-# Define the time-stepping function
-@jit
-def time_step(u, t):
-    u_next = u + dt * grad(wave_eqn)(u, t, dx, dy, c)
-    return u_next, t + dt
-
-# Solve the wave equation
-u = u0
-t = 0.0
-while t < T:
-    u, t = time_step(u, t)
-
-```
+  - [Multiple TPU](https://github.com/google/jax/blob/main/cloud_tpu_colabs/Wave_Equation.ipynb)
+  - [j-Wave: Differentiable acoustic simulations in JAX](https://github.com/ucl-bug/jwave)
