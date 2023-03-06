@@ -1,0 +1,9 @@
+name: jax
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - jax
+  - matplotlib
+  - jupyterlab
+  - numpy

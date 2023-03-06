@@ -76,7 +76,41 @@ x = jnp.ones((5000, 5000))
 %timeit -n10 -r3 slow_f(x)
 ```
 
-# Jax as Numpy
+## Jax as Numpy
+
+Simply import jax.numpy
+
+```python
+import jax.numpy as jnp
+
+ar = jnp.array([1,2,3])
+```
+
+## Jax as Numpy
+
+No pseudo-random state!
+
+```python
+import jax
+import jax.numpy as jnp
+
+key = jax.random.PRNGKey(seed)
+ar = jax.random.uniform(key, (100, 1000))
+```
+
+## Jax as Numpy
+
+Arrays are immutable
+
+```python
+import jax.numpy as jnp
+
+ar = jnp.array([1,2,3])
+ar[:1] = jnp.array([0,0])  # WRONG!
+new = ar.at[:2].set([0,0])
+```
+
+## Jax as Numpy
 
 ```python
 import jax.numpy as jnp
