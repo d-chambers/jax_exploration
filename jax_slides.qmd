@@ -17,14 +17,28 @@ resources:
 ## Jax: What is it? 
 
 :::{.incremental}
-- Python library
-- Numpy replacement
+- Python library from DeepMind
 - Linear algebra workhorse
   - Code complied to XLA 
   - Supports CPU, GPU, TPU
+  - Supports distributed devices (many GPU/TPU)
 - Set of functional transforms
 - Set of deep learning primitives
 - How can we use it in geophysics?
+:::
+
+
+
+## Jax: Design and Ecosystem
+
+:::{.incremental}
+- Heavily functional (Haskell type signatures)
+  - function transformations/compositions
+  - immutable data structures
+- jax.lax - XLA mapped primitives
+- jax.numpy - near numpy parity 
+- [50+ jax-based libraries](https://github.com/n2cholas/awesome-jax)
+  - [j-Wave: Differentiable acoustic simulations in JAX](https://github.com/ucl-bug/jwave)
 :::
 
 
@@ -52,8 +66,52 @@ def tanh(x):  # Define a function
 grad_tanh = grad(tanh)  # Obtain its gradient function
 print(grad_tanh(1.0))   # Evaluate it at x = 1.0
 ```
-
 :::
+
+
+
+## Jax: Grad
+
+Grad is composable!
+
+<br>
+
+```python
+from jax import jacfwd, jacrev
+
+def hessian(f):
+    return jacfwd(jacrev(f))
+
+H = hessian(lambda x, y, z: x**2 + y**2 + z**2)
+```
+
+
+## Jax: V map
+
+Advanced controls for broadcasting
+
+```python
+import jax.numpy as jnp
+from jax import vmap
+
+add = jnp.add
+
+a = jnp.array([1, 2, 3, 4])
+b = jnp.array([[5, 6], [7, 8]])
+
+add_loop = lambda a, b: jnp.array([add(x, b) for x in a])
+
+add_no_loop = vmap(add, in_axes=(0, None), out_axes=0)
+
+out1 = add_loop(a, b)
+out2 = add_no_loop(a, b)
+
+print(out1)
+print(out2)
+
+
+```
+
 
 ## Jax: Just in Time (jit) Compilation
 
@@ -80,6 +138,8 @@ x = jnp.ones((5000, 5000))
 
 Simply import jax.numpy
 
+<br>
+
 ```python
 import jax.numpy as jnp
 
@@ -90,10 +150,12 @@ ar = jnp.array([1,2,3])
 
 No pseudo-random state!
 
+<br>
+
 ```python
 import jax
-import jax.numpy as jnp
 
+seed = 42
 key = jax.random.PRNGKey(seed)
 ar = jax.random.uniform(key, (100, 1000))
 ```
@@ -101,6 +163,8 @@ ar = jax.random.uniform(key, (100, 1000))
 ## Jax as Numpy
 
 Arrays are immutable
+
+<br>
 
 ```python
 import jax.numpy as jnp
@@ -112,8 +176,101 @@ new = ar.at[:2].set([0,0])
 
 ## Jax as Numpy
 
+<br>
+
+There are other [sharp bits](https://jax.readthedocs.io/en/latest/notebooks/Common_Gotchas_in_JAX.html#pure-functions) 
+
+
+## Jit timing
+
+Timing functions:
+
+<br>
+
+```python
+def axpy_self(ar, scalar):
+    return ar * scalar + ar
+
+def pow_add(ar):
+    return ar + ar**2 + ar**3 + ar**4
+```
+
+
+## Jit timing
+CPU 
+
+::: {layout-ncol=2}
+![axpy no jit](fig/cpu/axpy_no_jit.png)
+
+![axpy jit](fig/cpu/axpy_jit.png)
+:::
+
+
+## Jit timing
+CPU 
+
+::: {layout-ncol=2}
+![power add no jit](fig/cpu/power_add_no_jit.png)
+
+![power add jit](fig/cpu/power_add_jit.png)
+:::
+
+
+## Jit timing
+GPU 
+
+::: {layout-ncol=2}
+![axpy no jit](fig/gpu/axpy_no_jit.png)
+
+![axpy jit](fig/gpu/axpy_jit.png)
+:::
+
+
+## Jit timing
+GPU
+
+::: {layout-ncol=2}
+![power add no jit](fig/gpu/power_add_no_jit.png)
+
+![power add jit](fig/gpu/power_add_jit.png)
+:::
+
+
+
+## 2D acoustic wave equation
+
 ```python
 import jax.numpy as jnp
+from jax import grad, jit
 
-ar = jnp.array([1,2,3])
+# Define the wave equation
+def wave_eqn(u, t, dx, dy, c):
+    d2udx2 = (jnp.roll(u, -1, axis=1) - 2 * u + jnp.roll(u, 1, axis=1)) / dx**2
+    d2udy2 = (jnp.roll(u, -1, axis=0) - 2 * u + jnp.roll(u, 1, axis=0)) / dy**2
+    d2udt2 = c**2 * (d2udx2 + d2udy2)
+    return d2udt2
+
+# Define the initial conditions
+u0 = jnp.zeros((Nx, Ny))
+u0[Nx//2, Ny//2] = 1
+
+# Define the parameters
+c = 1.0
+dx = 1.0
+dy = 1.0
+dt = 0.01
+T = 10.0
+
+# Define the time-stepping function
+@jit
+def time_step(u, t):
+    u_next = u + dt * grad(wave_eqn)(u, t, dx, dy, c)
+    return u_next, t + dt
+
+# Solve the wave equation
+u = u0
+t = 0.0
+while t < T:
+    u, t = time_step(u, t)
+
 ```
